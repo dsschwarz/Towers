@@ -1,9 +1,11 @@
-var boardSize = 4; // can handle 5, but very slow
-window.setSize = function(size) {
-    if (size > 3 && size<7) {
-        boardSize = size;
-    }
-};
+//var boardSize = parseInt(prompt("Board Size"));
+
+// TODO change unique key generation
+// Should not need to generate all possible boards.
+// Instead, create a key, solve until next step is ambiguous.
+// Add a new clue to the key, to narrow down to one step, continue solving
+
+var boardSize = 4;
 var sizeSq = boardSize*boardSize;
 var printLength = boardSize*4 + sizeSq;
 
@@ -36,9 +38,9 @@ function shuffleArray(array) {
     return array;
 }
 
-var validBoards = [];
-(function generateBoards() {
+function generateBoards() {
     var board = [];
+    var validBoards = [];
     for (var i=0; i < boardSize; i++) {
         var a = [];
         for (var j=0; j < boardSize; j++) {
@@ -91,7 +93,8 @@ var validBoards = [];
     }
     // Recursively set all cells for all possible configurations
     setCell(0, 0);
-})(); // call immediately
+    return validBoards;
+}
 
 function generateBoardPrint(b) {
     // Creates a unique stamp representing the board's information
@@ -118,8 +121,10 @@ function uniqueKey(boardIndex) {
     // Creates a key from the boardPrint that uniquely identifies it from the other possible boards
     // This key is (indexInPrint->valueAtIndex)
     // All values in the key are the ones that will be shown as clues to the user
-    var boardPrint = boardPrints[boardIndex];
-    var uniqueBoard = validBoards[boardIndex];
+    var boardInfo = masterBoardList[boardIndex];
+    var uniqueBoard = boardInfo.board;
+    var boardPrint = boardInfo.boardPrint;
+
     console.assert(generateBoardPrint(uniqueBoard) === boardPrint, "Wrong board and boardPrint!");
 
     var labelIndices = [];
@@ -183,13 +188,13 @@ function getMatching(key, boardIndices) {
     }
     if (boardIndices) {
         boardIndices.forEach(function(i) {
-            if (matchesPrint(boardPrints[i])) {
+            if (matchesPrint(masterBoardList[i].boardPrint)) {
                 matching.push(i);
             }
         })
     } else {
-        for (var i = 0; i < boardPrints.length; i++) {
-            if (matchesPrint(boardPrints[i])) {
+        for (var i = 0; i < masterBoardList[i].length; i++) {
+            if (matchesPrint(masterBoardList[i].boardPrint)) {
                 matching.push(i);
             }
         }
@@ -264,8 +269,12 @@ function validate() {
 }
 var board; // keep this accessible in validate
 function initBoard(boardIndex) {
-    var boardKey = uniqueKey(boardIndex);
-    board = validBoards[boardIndex];
+    var boardInfo = masterBoardList[boardIndex];
+    board = boardInfo[board];
+    if (!boardInfo.uniqueKey) {
+        boardInfo.uniqueKey = uniqueKey(boardIndex);
+    }
+    var boardKey = boardInfo.uniqueKey;
     var table = $("#gameTable");
     var label;
     table.empty();
@@ -329,24 +338,38 @@ function initBoard(boardIndex) {
 function timeElapsed() {
     return Math.floor((Date.now() - startTime)/1000);
 }
-var boardPrints = validBoards.map(function(b) {return generateBoardPrint(b)});
+
 var startTime, timer;
-$(document).ready(function() {
-    var randIndex = Math.floor(Math.random() * (validBoards.length));
-    initBoard(randIndex);
-    function beginTimer() {
-        startTime = Date.now();
-        function updateText() {
-            $("#clock").text(timeElapsed())
-        }
-        timer = setInterval(updateText, 1000);
-        updateText();
+var masterBoardList = [];
+$.getJSON("http://localhost:8000/boards.json", {}, function(boardInfo) {
+    if (boardInfo[boardSize]) {
+        masterBoardList = boardInfo[boardSize]
+    } else {
+        var generatedBoards = generateBoards();
+        generatedBoards.forEach(function(b) {
+            masterBoardList.push({
+                board: b,
+                boardPrint: generateBoardPrint(b)
+            })
+        });
     }
-    beginTimer();
-    $("#restart").click(function() {
-        clearInterval(timer);
-        beginTimer();
-        var randIndex = Math.floor(Math.random() * (validBoards.length));
+    $(document).ready(function() {
+        var randIndex = Math.floor(Math.random() * (masterBoardList.length));
         initBoard(randIndex);
-    })
+        function beginTimer() {
+            startTime = Date.now();
+            function updateText() {
+                $("#clock").text(timeElapsed())
+            }
+            timer = setInterval(updateText, 1000);
+            updateText();
+        }
+        beginTimer();
+        $("#restart").click(function() {
+            clearInterval(timer);
+            beginTimer();
+            var randIndex = Math.floor(Math.random() * (masterBoardList.length));
+            initBoard(randIndex);
+        })
+    });
 });
