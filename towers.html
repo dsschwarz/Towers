@@ -1,0 +1,71 @@
+<html>
+<head>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="towers.js" type="text/javascript"> </script>
+    <style type="text/css">
+
+        #gameTable {
+            border-spacing: 0;
+        }
+        #textOutput {
+            margin: 20px 20px 20px 70px;;
+            width: 40%;
+        }
+        tr {
+            height: 80px;
+        }
+        tr:last-child td {
+            border-top: 1px solid black;
+        }
+        tr:last-child td:last-child, tr:last-child td:first-child {
+            border-top: none;
+            border-left: none;
+        }
+        tr:first-child td {
+            border-left: none;
+        }
+
+        td:last-child {
+            border-left: 1px solid black;
+        }
+        td.cell {
+            border-left: 1px solid black;
+            border-top: 1px solid black;
+        }
+        td {
+            text-align: center;
+            width: 80px;
+        }
+        input {
+            width: 40px;
+        }
+
+        body > div {
+            float: left;
+        }
+
+        button {
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <table id="gameTable">
+        </table>
+    </div>
+    <div>
+        Time: <span id="clock">0</span><br>
+        <button onclick="validate()">Validate</button><br>
+        <button id="restart">New Game</button>
+    </div>
+    <div id="textOutput">
+        <p>Towers is a puzzle game where a grid must be filled with towers. For a 4x4 grid, here are <span class="boardSize">4</span>
+            tower heights, and every row and column has exactly one tower of each height. The numbers shown on the side
+            of the grid are the number of towers visible along that line. Taller towers hide shorter towers. Try to complete
+            the grid.
+        </p>
+    </div>
+</body>
+</html>
