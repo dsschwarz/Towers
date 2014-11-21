@@ -193,7 +193,7 @@ function getMatching(key, boardIndices) {
             }
         })
     } else {
-        for (var i = 0; i < masterBoardList[i].length; i++) {
+        for (var i = 0; i < masterBoardList.length; i++) {
             if (matchesPrint(masterBoardList[i].boardPrint)) {
                 matching.push(i);
             }
@@ -270,7 +270,7 @@ function validate() {
 var board; // keep this accessible in validate
 function initBoard(boardIndex) {
     var boardInfo = masterBoardList[boardIndex];
-    board = boardInfo[board];
+    board = boardInfo.board;
     if (!boardInfo.uniqueKey) {
         boardInfo.uniqueKey = uniqueKey(boardIndex);
     }
@@ -341,18 +341,30 @@ function timeElapsed() {
 
 var startTime, timer;
 var masterBoardList = [];
-$.getJSON("http://localhost:8000/boards.json", {}, function(boardInfo) {
+$.getJSON("http://localhost:8000/boards.json").done(function(boardInfo) {
     if (boardInfo[boardSize]) {
         masterBoardList = boardInfo[boardSize]
     } else {
-        var generatedBoards = generateBoards();
-        generatedBoards.forEach(function(b) {
-            masterBoardList.push({
-                board: b,
-                boardPrint: generateBoardPrint(b)
-            })
-        });
+        populateMasterList();
     }
+    initializePage();
+    
+}).fail(function(){
+    populateMasterList();
+    initializePage();
+});
+
+function populateMasterList() {
+    var generatedBoards = generateBoards();
+    generatedBoards.forEach(function(b) {
+        masterBoardList.push({
+            board: b,
+            boardPrint: generateBoardPrint(b)
+        })
+    });
+}
+
+function initializePage() {
     $(document).ready(function() {
         var randIndex = Math.floor(Math.random() * (masterBoardList.length));
         initBoard(randIndex);
@@ -372,4 +384,4 @@ $.getJSON("http://localhost:8000/boards.json", {}, function(boardInfo) {
             initBoard(randIndex);
         })
     });
-});
+}
